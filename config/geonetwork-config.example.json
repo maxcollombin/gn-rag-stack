@@ -1,0 +1,16 @@
+{
+  "geonetwork": {
+    "name": "Votre Catalogue GeoNetwork",
+    "base_url": "https://votre-instance.com/geonetwork",
+    "search_endpoint": "/srv/api/search/records/_search",
+    "user_agent": "GeoNetwork-RAG-Stack/1.0 (Research Project)"
+  },
+  "elasticsearch": {
+    "index_name": "geonetwork"
+  },
+  "ingestion": {
+    "batch_size": 50,
+    "request_delay": 2,
+    "timeout": 30
+  }
+}

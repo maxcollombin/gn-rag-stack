@@ -1,0 +1,124 @@
+services:
+  # Interface Web Gradio
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    container_name: geonetwork-web
+    ports:
+      - "7860:7860"
+    environment:
+      - RAG_API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Service API RAG avec FastAPI
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: geonetwork-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ES_HOST=http://elasticsearch:9200
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - elasticsearch
+      - ollama
+    restart: unless-stopped
+
+  # Base de données vectorielle
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms3g -Xmx3g
+      - "cluster.routing.allocation.disk.watermark.low=85%"
+      - "cluster.routing.allocation.disk.watermark.high=90%"
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    mem_limit: 4g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Serveur LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+    mem_limit: 6g
+    environment:
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Service d'initialisation d'Ollama (one-time)
+  ollama-init:
+    image: curlimages/curl:latest
+    container_name: ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Vérification du modèle Llama 3.2...' &&
+        echo 'Attente de la disponibilité d''Ollama...' &&
+        until curl -s http://ollama:11434/api/tags > /dev/null 2>&1; do
+          echo 'Attente d''Ollama...'
+          sleep 2
+        done &&
+        if ! curl -s http://ollama:11434/api/tags | grep -q 'llama3.2'; then
+          echo 'Installation du modèle Llama 3.2 (cela peut prendre plusieurs minutes)...' &&
+          curl -X POST http://ollama:11434/api/pull -d '{\"name\":\"llama3.2:latest\"}' &&
+          echo 'Modèle Llama 3.2 installé avec succès'
+        else
+          echo 'Modèle Llama 3.2 déjà installé'
+        fi
+      "
+    restart: "no"
+    profiles:
+      - init
+
+  # Service d'ingestion des métadonnées GeoNetwork (one-time)
+  data-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: data-init
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ES_HOST=http://elasticsearch:9200
+    command: python gn-metadata-ingestion.py
+    restart: "no"
+    profiles:
+      - init
+
+volumes:
+  ollama:
+  elasticsearch_data:

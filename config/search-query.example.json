@@ -1,0 +1,22 @@
+{
+  "query_template": {
+    "from": 0,
+    "size": 50,
+    "query": {
+      "match_all": {}
+    },
+    "_source": {
+      "includes": [
+        "uuid", 
+        "resourceTitleObject.default",
+        "resourceAbstractObject.default"
+      ]
+    }
+  },
+  "field_mapping": {
+    "uuid": "uuid",
+    "title": "resourceTitleObject.default",
+    "abstract": "resourceAbstractObject.default"
+  },
+  "description": "Configuration exemple - Utilise 'match_all' pour récupérer toutes les métadonnées. Adaptez la requête selon vos besoins (groupOwner, statuts, etc.)"
+}

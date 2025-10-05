@@ -1,0 +1,3 @@
+# Dépendances pour l'interface web
+-r base.txt
+gradio

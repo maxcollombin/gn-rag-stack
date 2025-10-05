@@ -1,0 +1,5 @@
+# Dépendances pour le service API RAG
+-r base.txt
+fastapi
+uvicorn[standard]
+sentence-transformers

@@ -1,0 +1,25 @@
+# Configuration Elasticsearch pour GeoCAT RAG
+cluster.name: "docker-cluster"
+node.name: "geocat-node"
+network.host: 0.0.0.0
+http.port: 9200
+discovery.type: single-node
+
+# Désactiver la sécurité pour simplicité
+xpack.security.enabled: false
+
+# Optimisations pour développement
+bootstrap.memory_lock: false
+cluster.routing.allocation.disk.threshold_enabled: false
+
+# OPTIMISATIONS PERFORMANCE
+# Cache et indexation optimisés
+indices.memory.index_buffer_size: 20%
+indices.queries.cache.size: 30%
+indices.fielddata.cache.size: 40%
+
+# Refresh interval pour de meilleures performances d'écriture
+indices.memory.min_index_buffer_size: 96mb
+
+# Logging réduit
+logger.level: WARN

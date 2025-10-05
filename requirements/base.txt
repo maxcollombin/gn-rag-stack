@@ -1,0 +1,3 @@
+# Dépendances communes à tous les services
+requests
+elasticsearch<8.0.0
