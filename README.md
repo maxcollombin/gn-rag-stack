@@ -39,9 +39,6 @@ Configurez les critères de sélection des métadonnées :
 ```bash
 cp config/search-query.example.json config/search-query.json
 ```
-Adaptez les `groupOwner` et critères selon vos besoins.
-
-> **Astuce** : Consultez les fichiers `.example.json` pour voir toutes les options disponibles.
 
 ## Débogage
 
